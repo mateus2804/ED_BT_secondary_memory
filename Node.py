@@ -1,3 +1,9 @@
+# ============================================================
+# Trabalho Prático T1 - Estruturas de Dados e PAA - 2026/2
+# Nome: Mateus Ferreira Ferraz
+# Matrícula: 2026230173
+# ============================================================
+
 import struct
 from dataclasses import dataclass, field
 
@@ -18,12 +24,13 @@ class Node():
         self.formato = self.get_format()
         self.tamanho = struct.calcsize(self.formato)
 
+    # Como os objetos tem tamanho fixo no arquivo binário (na minha implementação), pelo limite máximo para uma arvore B de ordem d, eu preencho os vetores com -1
     def init_objects(self):
         def temp(obj, tam_max):
-            if type(obj) != list:
+            if not isinstance(obj, list):
                 return [-1 for _ in range(tam_max)]
             elif len(obj) < (tam_max):
-                [obj.append(-1) for _ in range(tam_max - len(obj))]
+                obj.extend([-1] * (tam_max- len(obj)))
                 return obj
             else:
                 return obj
@@ -43,21 +50,42 @@ class Node():
         return format_string
 
     def search_keys(self, target):
-        achou = False
-        for i, chave in enumerate(self.chaves):
-            if self.is_folha == False:
-                if target < chave or chave == -1:
-                    return self.filhos[i]
-                if i == len(self.chaves) - 1:
-                    return self.filhos[i + 1]
-            if target == chave:
-                achou = True
-                break
-                
-        return achou
+        chaves = [i for i in self.chaves if i != -1]
 
+        #busca posicao da chave
+        pos = 0
+        while pos < len(chaves) and chaves[pos] < target:
+            pos += 1
 
+        #como a lista de filhos é maior (em 1 espaço) do que a de chaves, evita erro na linha 58 out of index
+        if pos >= len(chaves):
+            return False, self.filhos[pos]
 
+        #se a chave existir no nó, retorna True e id do próprio nó
+        if chaves[pos] == target:
+            return True, self.node_id
+
+        # se não, retorna o id do proximo filho
+        return False, self.filhos[pos]
+
+    def insert(self, chave, registro):
+
+        chaves = [i for i in self.chaves if i != -1]
+        registros = [i for i in self.registros if i != -1]
+
+        pos = 0
+        while pos < len(chaves) and chaves[pos] < chave:
+            pos += 1
+
+        #insere na a chave numa posicao de modo que as chaves continuam ordenadas
+        #insere também o registro para seguir a lógica
+        chaves.insert(pos, chave)
+        registros.insert(pos, registro)
+
+        
+        self.chaves = chaves + [-1] * (len(self.chaves) - len(chaves))
+        self.registros = registros + [-1] * (len(self.registros) - len(registros))
+ 
     def to_bytes(self):
         return struct.pack(self.formato, self.node_id, self.ordem, self.is_folha, self.pai,  *self.chaves, *self.registros, *self.filhos)
 
@@ -86,4 +114,3 @@ class Node():
 
         return node
 
-    
